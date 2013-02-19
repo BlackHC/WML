@@ -1,0 +1,109 @@
+example:
+---
+key value value value
+---
+
+---
+key:
+	key value value value
+	key value
+	key::
+		some text
+		asdasd
+		asdasd
+		asdas
+	key:
+		key value
+		key value
+---
+
+---
+key:
+		value
+		value
+		value
+
+		key value
+		key value value
+		key valeu
+---
+above: { key: [[value, value, value], {key: value, key: [value, value], key: value}] }
+---
+key:
+	value
+	value
+
+	value
+	value
+
+
+
+	value
+---
+above: still only one array
+
+=> reduced format: no sub arrays
+
+---
+key:
+	key value value value
+	key value value value
+	key:
+		key:
+			value
+			value
+			value
+		key:
+			key value
+			key value value
+			key value
+---
+
+---
+key:
+
+key:
+
+key value
+---
+above: { key: [], key: [], }
+
+aim:
+* newlines dont have any special meaning
+* only indentation counts
+
+arrays are maps without values (only keys)
+and keys are like flags/toggles
+
+example:
+
+key:
+	flag
+	flag
+
+	key value
+
+	flag
+
+	key:
+		flag
+		flag
+		flag
+
+	key value value value
+
+simple grammar:
+
+root := map
+
+IDENT, DEIDENT are tokens that control the identation level
+EMPTYLINE is an empty line
+NEWLINE is a line break
+
+value := key | text_literal
+
+key := number | identifier | string
+
+text_literal := ':' NEWLINE IDENT textblock DEIDENT 
+
+map := (key value+ NEWLINE | key ':' ( text_literal | NEWLINE IDENT non-empty map DEIDENT ))*

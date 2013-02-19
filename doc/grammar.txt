@@ -1,0 +1,19 @@
+simple grammar:
+
+root := node
+
+IDENT, DEIDENT are tokens that control the identation level
+EMPTYLINE is an empty line
+NEWLINE is a line break
+
+node := array | map | value
+
+value := key | text_literal
+
+key := number | identifier | string
+
+text_literal := ':' NEWLINE IDENT textblock EMPTYLINE DEIDENT 
+
+array := (value | IDENT node EMTPYLINE DEIDENT)+
+
+map := (key value+ NEWLINE | key ':' ( text_literal | NEWLINE IDENT (array | map) EMPTYLINE DEIDENT ))+

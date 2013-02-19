@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "reemitter", "test-src\reemitter.vcxproj", "{B556CD05-2987-4F37-8B21-8B38A22E423B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wmlTest", "test-src\wmlTest.vcxproj", "{4053AA02-CC4D-4D36-9342-E3452C7C3F97}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B556CD05-2987-4F37-8B21-8B38A22E423B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B556CD05-2987-4F37-8B21-8B38A22E423B}.Debug|Win32.Build.0 = Debug|Win32
+		{B556CD05-2987-4F37-8B21-8B38A22E423B}.Release|Win32.ActiveCfg = Release|Win32
+		{B556CD05-2987-4F37-8B21-8B38A22E423B}.Release|Win32.Build.0 = Release|Win32
+		{4053AA02-CC4D-4D36-9342-E3452C7C3F97}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4053AA02-CC4D-4D36-9342-E3452C7C3F97}.Debug|Win32.Build.0 = Debug|Win32
+		{4053AA02-CC4D-4D36-9342-E3452C7C3F97}.Release|Win32.ActiveCfg = Release|Win32
+		{4053AA02-CC4D-4D36-9342-E3452C7C3F97}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
