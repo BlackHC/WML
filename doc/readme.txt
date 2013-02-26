@@ -6,7 +6,7 @@
 		* only indentation counts
 		* empty lines have no meaning
 		* embedding text is easy
-		* everything is a map
+		* everything is a map internally
 
 
 	Example:
@@ -37,8 +37,8 @@
 
 			stream:
 				data::
-					key names 
-					dont have to 
+					key names
+					dont have to
 					be unique (see stream)
 				flags:
 					read
@@ -48,7 +48,7 @@
 
 
 	Grammar::
-		INDENT, DEINDENT are virtual tokens that control the indentation level		
+		INDENT, DEINDENT are virtual tokens that control the indentation level
 		NEWLINE is a line break
 
 		Indentation is done with tabs only at the moment.
