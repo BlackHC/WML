@@ -25,6 +25,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <boost/format.hpp>
 #include <string>
 #include <exception>
+#include <assert.h>
 
 namespace LeanTextProcessing {
 	struct TextPosition {
@@ -41,31 +42,44 @@ namespace LeanTextProcessing {
 				++line;
 				column = 1;
 			}
+			else {
+				++column;
+			}
 		}
 	};
 
+	// named text
 	struct TextContainer {
-		std::string textIdentifier;
-
+		std::string name;
 		std::string text;
 
-		TextContainer( const std::string &text, const std::string &textIdentifier ) : text( text ), textIdentifier( textIdentifier ) {}
+		// TODO: change parameter order [3/17/2013 Andreas]
+		TextContainer( const std::string &text, const std::string &name ) 
+			: text( text )
+			, name( name )
+		{}
 	};
 
 	struct TextException;
 
+	// reads in text from a TextContainer 
 	struct TextIterator {
 		const TextContainer &textContainer;
 		TextPosition current;
 
-		TextIterator( const TextContainer &textContainer, const TextPosition &position ) : textContainer( textContainer ), current( position ) {}
+		TextIterator( const TextContainer &textContainer, TextPosition position )
+			: textContainer( textContainer )
+			, current( position ) 
+		{}
 
-		bool atEof() const {
+		bool isAtEnd() const {
 			return current.index >= (int) textContainer.text.size();
 		}
 
+		// always returns \n for newlines
 		char peek() const {
-			// assert !atEof()
+			assert( !isAtEnd() );
+
 			const char c = textContainer.text[ current.index ];
 			if( c == '\r' ) {
 				return '\n';
@@ -73,7 +87,10 @@ namespace LeanTextProcessing {
 			return c;
 		}
 
+		// supports *NIX, Windows and MacOs newlines
 		void next() {
+			assert( !isAtEnd() );
+
 			bool newLine = false;
 			if( textContainer.text[ current.index ] == '\r' ) {
 				newLine = true;
@@ -82,35 +99,35 @@ namespace LeanTextProcessing {
 					++current.index;
 				}
 			}
+			else if( textContainer.text[ current.index ] == '\n' ) {
+				newLine = true;
+			}
 			current.increment( newLine );
 		}
 
 		// helper class
+		// read in text provisionally and restore original position on leaving the scope (by default)
 		struct Scope {
-			TextIterator *iterator;
+			TextIterator &iterator;
 			TextPosition saved;
 
+			// note: newlines won't have been converted
 			std::string getScopedText() {
-				return iterator->textContainer.text.substr( saved.index, iterator->current.index - saved.index );
+				return iterator.textContainer.text.substr( saved.index, iterator.current.index - saved.index );
 			}
 
+			// accept the parsed text
+			// (useful for partial accepts)
 			void accept() {
-				if( iterator ) {
-					saved = iterator->current;
-				}
+				saved = iterator.current;
 			}
 
+			// reject the text and rewind to the stored position
 			void reject() {
-				if( iterator ) {
-					iterator->current = saved;
-				}
+				iterator.current = saved;
 			}
 
-			void release() {
-				iterator = nullptr;
-			}
-
-			Scope( TextIterator &iterator ) : iterator( &iterator ), saved( iterator.current ) {}
+			Scope( TextIterator &iterator ) : iterator( iterator ), saved( iterator.current ) {}
 			~Scope() {
 				reject();
 			}
@@ -124,7 +141,7 @@ namespace LeanTextProcessing {
 		}
 		
 		bool tryMatch( const char c ) {
-			if( !atEof() && peek() == c ) {
+			if( !isAtEnd() && peek() == c ) {
 				next();
 				return true;
 			}
@@ -132,22 +149,27 @@ namespace LeanTextProcessing {
 		}
 
 		bool tryMatch( const char *text ) {
+			Scope scope( *this );
+
 			for( const char *p = text ; *p ; ++p ) {
-				if( atEof() || peek() != *p ) {
+				if( isAtEnd() || peek() != *p ) {
 					return false;
 				}
 				next();
 			}
+
+			scope.accept();
 			return true;
 		}
 
 		bool tryMatchAny( const char *set ) {
-			if( atEof() ) {
+			if( isAtEnd() ) {
 				return false;
 			}
 
+			const char c = peek();
 			for( const char *p = set ; *p ; ++p ) {
-				if( peek() == *p ) {
+				if( c == *p ) {
 					next();
 					return true;
 				}
@@ -156,20 +178,21 @@ namespace LeanTextProcessing {
 		}
 
 		bool check( const char c ) const {
-			return !atEof() && peek() == c;
+			return !isAtEnd() && peek() == c;
 		}
 
 		bool checkNot( const char c ) const {
-			return !atEof() && peek() != c;
+			return !isAtEnd() && peek() != c;
 		}
 
 		bool checkAny( const char *set ) {
-			if( atEof() ) {
+			if( isAtEnd() ) {
 				return false;
 			}
 
+			const char c = peek();
 			for( const char *p = set ; *p ; ++p ) {
-				if( peek() == *p ) {
+				if( c == *p ) {
 					return true;
 				}
 			}
@@ -177,12 +200,13 @@ namespace LeanTextProcessing {
 		}
 
 		bool checkNotAny( const char *cset ) {
-			if( atEof() ) {
+			if( isAtEnd() ) {
 				return false;
 			}
 
+			const char c = peek();
 			for( const char *p = cset ; *p ; ++p ) {
-				if( peek() == *p ) {
+				if( c == *p ) {
 					return false;
 				}
 			}
@@ -207,25 +231,28 @@ namespace LeanTextProcessing {
 		void error( const std::string &error );
 	};
 
+	// instead of keeping the whole container, a context stores relevant information for error processing
 	struct TextContext {
-		std::string textIdentifier;
+		std::string name;
 		TextPosition position;
 		std::string surroundingText;
 
 		TextContext() {}
 
 		TextContext( TextContext &&context ) 
-			: 
-				textIdentifier( std::move( context.textIdentifier ) ), 
-				position( std::move( context.position ) ),
-				surroundingText( std::move( context.surroundingText ) ) 
+			: name( std::move( context.name ) )
+			, position( std::move( context.position ) )
+			, surroundingText( std::move( context.surroundingText ) ) 
 		{}
 
 		TextContext( const TextIterator &iterator, int contextWidth = 30 ) 
-			: textIdentifier( iterator.textContainer.textIdentifier ), 
-				position( iterator.current ),
-				surroundingText( iterator.textContainer.text.substr( std::max( 0, position.index - contextWidth ), contextWidth ) + "*HERE*" + iterator.textContainer.text.substr( std::max( 0, position.index ), contextWidth ))
-			{}
+			: name( iterator.textContainer.name )
+			, position( iterator.current )
+			, surroundingText( 
+				iterator.textContainer.text.substr( std::max( 0, position.index - contextWidth ), contextWidth ) 
+					+ "*HERE*" + iterator.textContainer.text.substr( std::max( 0, position.index ), contextWidth )
+				) 
+		{}
 	};
 
 	struct TextException : std::exception {
@@ -234,10 +261,13 @@ namespace LeanTextProcessing {
 
 		std::string message;
 
-		TextException( const TextContext &context, const std::string &error ) : context( context ), error( error ) {
+		TextException( const TextContext &context, const std::string &error ) 
+			: context( context )
+			, error( error )
+		{
 			message = boost::str( 
 				boost::format( "%s(%i:%i (%i)): %s\n\t%s\n" ) 
-					% context.textIdentifier 
+					% context.name 
 					% context.position.line 
 					% context.position.column 
 					% context.position.index 

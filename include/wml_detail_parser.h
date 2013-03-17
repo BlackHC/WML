@@ -36,7 +36,7 @@ namespace wml {
 				while( textIterator.checkNotAny( " \t\n" ) ) {
 					if( textIterator.check( ':' ) ) {
 						TextIterator::Scope scope( textIterator );
-						textIterator.tryMatch( "::" ) || textIterator.tryMatch( ':' );
+						textIterator.tryMatch( ':' ) && textIterator.tryMatch( ':' );
 
 						if( textIterator.checkNotAny( " \t\n" ) ) {
 							text.append( scope.getScopedText() );
@@ -84,7 +84,7 @@ namespace wml {
 				}
 				while( textIterator.checkNotAny( "\"\n" ) ) {
 					if( textIterator.tryMatch( '\\' ) ) {
-						if( textIterator.atEof() ) {
+						if( textIterator.isAtEnd() ) {
 							textIterator.error( "unexpected EOF!" );
 						}
 						const char control = textIterator.read();
@@ -193,7 +193,7 @@ namespace wml {
 				std::string text;
 
 				bool isEmptyLine;
-				while( !textIterator.atEof() && ( (isEmptyLine = checkRestOfLineEmpty()) || checkMinimumIndentLevel() )  ) {
+				while( !textIterator.isAtEnd() && ( (isEmptyLine = checkRestOfLineEmpty()) || checkMinimumIndentLevel() )  ) {
 					if( isEmptyLine ) {
 						textIterator.readLine();
 						text.push_back( '\n' );
@@ -235,7 +235,7 @@ namespace wml {
 				while( true ) {
 					skipEmptyLines();
 
-					if( !checkMinimumIndentLevel() || textIterator.atEof() ) {
+					if( !checkMinimumIndentLevel() || textIterator.isAtEnd() ) {
 						break;
 					}
 
@@ -282,7 +282,7 @@ namespace wml {
 			}
 
 			void parseInlineValues( Node &node ) {
-				while( !textIterator.atEof() && !textIterator.tryMatch( '\n' ) ) {
+				while( !textIterator.isAtEnd() && !textIterator.tryMatch( '\n' ) ) {
 					std::string value = parseValue();
 
 					node.nodes.push_back( Node( value, TextContext( textIterator ) ) );
