@@ -4,7 +4,7 @@ WML (Whitespace Markup Language)
 Example
 -------
 
-  key:
+	key:
 		subKey valueA "\tvalueB" 'value C'
 
 		rawText::
