@@ -74,17 +74,6 @@ namespace wml {
 		}
 
 		template< typename T >
-		T & getOr( const std::string &key, const T &defaultValue ) {
-			auto node = find( key );
-
-			if( node ) {
-				return node->as<T>();
-			}
-
-			return defaultValue;
-		}
-
-		template< typename T >
 		const T & get( const std::string &key ) const {
 			return (*this)[ key ].as<T>();
 		}
@@ -208,8 +197,8 @@ namespace wml {
 		Node( const std::string &content ) : content( content ) {}
 		Node( const std::string &content, const LeanTextProcessing::TextContext &context ) : content( content ), context( context ) {}
 
+		// move semantics
 		Node( Node &&node ) : content( std::move( node.content ) ), nodes( std::move( node.nodes ) ), context( std::move( node.context ) ) {}
-
 		Node & operator == ( Node &&node ) {
 			content = std::move( node.content );
 			nodes = std::move( node.nodes );

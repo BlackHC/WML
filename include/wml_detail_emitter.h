@@ -166,7 +166,7 @@ namespace wml {
 				text.push_back( '\n' );
 			}
 
-			void emitNodeChildren( const Node &node ) {
+			void emitNode( const Node &node ) {
 				for( auto item = node.nodes.begin() ; item != node.nodes.end() ; ++item ) {
 					emitTabs();
 					// emit the key
@@ -175,7 +175,7 @@ namespace wml {
 					if( isMap( *item ) ) {
 						text.append( ":\n" );
 						++indentLevel;
-						emitNodeChildren( *item );
+						emitNode( *item );
 						--indentLevel;
 					}
 					else if( isTextBlock( *item ) ) {
@@ -190,7 +190,7 @@ namespace wml {
 
 		inline std::string emit( const Node &node ) {
 			Emitter emitter;
-			emitter.emitNodeChildren( node );
+			emitter.emitNode( node );
 			return emitter.text;
 		}
 	}

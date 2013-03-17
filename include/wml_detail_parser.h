@@ -34,6 +34,7 @@ namespace wml {
 			std::string parseIdentifier() {
 				std::string text;
 				while( textIterator.checkNotAny( " \t\n" ) ) {
+					// support bla:bla as identifier (for convenience)
 					if( textIterator.check( ':' ) ) {
 						TextIterator::Scope scope( textIterator );
 						textIterator.tryMatch( ':' ) && textIterator.tryMatch( ':' );
@@ -82,6 +83,7 @@ namespace wml {
 				if( !textIterator.tryMatch( '"' ) ) {
 					textIterator.error( "'\"' expected!" );
 				}
+
 				while( textIterator.checkNotAny( "\"\n" ) ) {
 					if( textIterator.tryMatch( '\\' ) ) {
 						if( textIterator.isAtEnd() ) {
@@ -114,6 +116,7 @@ namespace wml {
 						text.push_back( textIterator.read() );
 					}
 				}
+
 				if( !textIterator.tryMatch( '"' ) ) {
 					textIterator.error( "'\"' expected!" );
 				}
@@ -127,9 +130,11 @@ namespace wml {
 				if( !textIterator.tryMatch( '\'' ) ) {
 					textIterator.error( "' expected!" );
 				}
+
 				while( textIterator.checkNotAny( "'\n" ) ) {
 					text.push_back( textIterator.read() );
 				}
+
 				if( !textIterator.tryMatch( '\'' ) ) {
 					textIterator.error( "' expected!" );
 				}
@@ -176,7 +181,7 @@ namespace wml {
 				skipIndentLevel();
 
 				if( textIterator.check( '\t' ) ) {
-					textIterator.error( boost::str( boost::format( "expected %i tabs - found more!") % indentLevel ) );
+					textIterator.error( boost::str( boost::format( "only expected %i tabs - found more!") % indentLevel ) );
 				}
 			}
 
@@ -205,7 +210,8 @@ namespace wml {
 					}
 				}
 
-				// remove the last newline
+				// remove the last newline character
+				// this makes it possible to have raw texts without newline characters at all
 				if( !text.empty() ) {
 					text.pop_back();
 				}
@@ -231,7 +237,7 @@ namespace wml {
 				}
 			}
 
-			void parseMap( Node &node, bool allowEmpty = true ) {
+			void parseNode( Node &node, bool allowEmpty = true ) {
 				while( true ) {
 					skipEmptyLines();
 
@@ -240,6 +246,8 @@ namespace wml {
 					}
 
 					ensureIndentLevel();
+					// this allows for whitespace between indentation and key name
+					// remove this for stricter handling
 					skipWhitespace();
 
 					std::string key = parseValue();
@@ -249,10 +257,8 @@ namespace wml {
 					skipWhitespace();
 
 					if( textIterator.tryMatch( ':' ) ) {
-						skipWhitespace();
-
 						if( textIterator.tryMatch( ':' ) ) {
-							// text literal
+							// raw text
 							skipWhitespace();
 							expectNewline();
 
@@ -263,10 +269,11 @@ namespace wml {
 							childNode.nodes.push_back( Node( indentedText, TextContext( textIterator ) ) );
 						}
 						else {
+							skipWhitespace();
 							expectNewline();
 
 							indentLevel++;
-							parseMap( childNode, false );
+							parseNode( childNode, false );
 							indentLevel--;
 						}
 					}
@@ -276,6 +283,7 @@ namespace wml {
 
 					node.nodes.push_back( std::move( childNode ) );
 				}
+
 				if( node.nodes.empty() && !allowEmpty ) {
 					textIterator.error( "expected non-empty map" );
 				}
@@ -300,7 +308,7 @@ namespace wml {
 			Parser parser( textContainer );
 
 			Node node( sourceIdentifier );
-			parser.parseMap( node );
+			parser.parseNode( node );
 			return node;
 		}
 	}
