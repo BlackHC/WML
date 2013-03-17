@@ -128,17 +128,6 @@ TEST( TextIterator_Helper, tryMatch ) {
 	ASSERT_FALSE( iterator.tryMatch( 'a' ) );
 }
 
-TEST( TextIterator_Helper, tryMatch2 ) {
-	TextContainer container( "abc", "container" );
-	TextIterator iterator( container, TextPosition() );
-
-	ASSERT_FALSE( iterator.tryMatch( "b" ) );
-	ASSERT_FALSE( iterator.tryMatch( "abcd" ) );
-	ASSERT_TRUE( iterator.tryMatch( "abc" ) );
-	ASSERT_TRUE( iterator.isAtEnd() );
-	ASSERT_FALSE( iterator.tryMatch( "abc" ) );
-}
-
 TEST( TextIterator_Helper, tryMatchAny ) {
 	TextContainer container( "a", "container" );
 	TextIterator iterator( container, TextPosition() );

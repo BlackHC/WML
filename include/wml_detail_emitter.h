@@ -51,7 +51,7 @@ namespace wml {
 					return VT_UNESCAPED_STRING;
 				}
 
-				// null characters => VT_ESCAPED_STRING
+				// null characters or special characters => VT_ESCAPED_STRING
 				for( auto c = value.cbegin() ; c != value.cend() ; ++c ) {
 					if( *c == 0 || *c == '\r' ) {
 						return VT_ESCAPED_STRING;
@@ -64,6 +64,7 @@ namespace wml {
 					}
 				}
 
+				// raw text only for more than 2 lines
 				if( numLines > 2 ) {
 					return VT_TEXT;
 				}
@@ -165,7 +166,7 @@ namespace wml {
 				text.push_back( '\n' );
 			}
 
-			void emitMap( const Node &node ) {
+			void emitNodeChildren( const Node &node ) {
 				for( auto item = node.nodes.begin() ; item != node.nodes.end() ; ++item ) {
 					emitTabs();
 					// emit the key
@@ -174,7 +175,7 @@ namespace wml {
 					if( isMap( *item ) ) {
 						text.append( ":\n" );
 						++indentLevel;
-						emitMap( *item );
+						emitNodeChildren( *item );
 						--indentLevel;
 					}
 					else if( isTextBlock( *item ) ) {
@@ -189,7 +190,7 @@ namespace wml {
 
 		inline std::string emit( const Node &node ) {
 			Emitter emitter;
-			emitter.emitMap( node );
+			emitter.emitNodeChildren( node );
 			return emitter.text;
 		}
 	}

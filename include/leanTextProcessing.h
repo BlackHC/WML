@@ -148,20 +148,6 @@ namespace LeanTextProcessing {
 			return false;
 		}
 
-		bool tryMatch( const char *text ) {
-			Scope scope( *this );
-
-			for( const char *p = text ; *p ; ++p ) {
-				if( isAtEnd() || peek() != *p ) {
-					return false;
-				}
-				next();
-			}
-
-			scope.accept();
-			return true;
-		}
-
 		bool tryMatchAny( const char *set ) {
 			if( isAtEnd() ) {
 				return false;
