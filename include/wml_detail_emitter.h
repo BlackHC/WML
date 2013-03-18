@@ -179,7 +179,7 @@ namespace wml {
 						--indentLevel;
 					}
 					else if( isTextBlock( *item ) ) {
-						emitValue( item->data().content, false );
+						emitValue( item->nodes[0].content, false );
 					}
 					else {
 						emitInlineValues( *item );

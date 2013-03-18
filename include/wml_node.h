@@ -20,6 +20,8 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+#pragma once
+
 #include <vector>
 #include <string>
 #include <boost/lexical_cast.hpp>
@@ -33,82 +35,58 @@ namespace wml {
 		typedef NodeContainer::iterator iterator;
 		typedef NodeContainer::const_iterator const_iterator;
 
+		// the internal implementation only uses these fields
 		LeanTextProcessing::TextContext context;
 		std::string content;
 		NodeContainer nodes;
 
-		Node & data() {
-			if( nodes.empty() ) {
-				error( "expected data at node!" );
-			}
-			else if( nodes.size() > 1 ) {
-				error( "expected data at node, found array/map!" );
-			}
-
-			return nodes[0];
-		}
-
-		const Node & data() const {
-			if( nodes.empty() ) {
-				error( "expected data at node!" );
-			}
-			else if( nodes.size() > 1 ) {
-				error( "expected data at node, found array/map!" );
-			}
-
-			return nodes[0];
-		}
-
-		template< typename T >
-		T as() const {
-			return boost::lexical_cast<T>( content );
+		//////////////////////////////////////////////////////////////////////////
+		// syntactic sugar
+		
+		std::string & key() {
+			return content;
 		}
 
 		const std::string & key() const {
 			return content;
 		}
 
-		template< typename T >
-		T & get( const std::string &key ) {
-			return (*this)[ key ].as<T>();
-		}
-
-		template< typename T >
-		const T & get( const std::string &key ) const {
-			return (*this)[ key ].as<T>();
-		}
-
-		template< typename T >
-		const T & getOr( const std::string &key, const T &defaultValue ) const {
-			auto node = find( key );
-
-			if( node ) {
-				return node->as<T>();
+		std::string & value() {
+			if( nodes.empty() ) {
+				error( "expected data at node!" );
+			}
+			else if( nodes.size() > 1 ) {
+				error( "expected data at node, found array/map!" );
 			}
 
-			return defaultValue;
+			return nodes[0].content;
 		}
 
-		iterator find(  const std::string &key ) {
-			for( auto node = nodes.begin() ; node != nodes.end() ; ++node ) {
-				if( node->content == key ) {
-					return node;
-				}
+		const std::string & value() const {
+			if( nodes.empty() ) {
+				error( "expected data at node!" );
 			}
-			return nodes.end();
-		}
-
-		iterator not_found() {
-			return nodes.end();
-		}
-
-		const_iterator find(  const std::string &key ) const {
-			for( auto node = nodes.begin() ; node != nodes.end() ; ++node ) {
-				if( node->content == key ) {
-					return node;
-				}
+			else if( nodes.size() > 1 ) {
+				error( "expected data at node, found array/map!" );
 			}
-			return nodes.end();
+
+			return nodes[0].content;
+		}
+
+		Node & operator[] ( int i ) {
+			return nodes[ i ];
+		}
+
+		const Node & operator[] ( int i ) const {
+			return nodes[ i ];
+		}
+
+		size_t size() const {
+			return nodes.size();
+		}
+
+		bool empty() const {
+			return nodes.empty();
 		}
 
 		iterator begin() {
@@ -127,6 +105,26 @@ namespace wml {
 			return nodes.cend();
 		}
 
+		iterator find( const std::string &key ) {
+			auto node = nodes.begin();
+			for( ; node != nodes.end() ; ++node ) {
+				if( node->content == key ) {
+					break;
+				}
+			}
+			return node;
+		}
+
+		const_iterator find( const std::string &key ) const {
+			auto node = nodes.cbegin();
+			for( ; node != nodes.cend() ; ++node ) {
+				if( node->content == key ) {
+					break;
+				}
+			}
+			return node;
+		}
+
 		Node & operator[] ( const std::string &key ) {
 			for( auto item = nodes.begin() ; item != nodes.end() ; ++item ) {
 				if( item->content == key ) {
@@ -137,19 +135,50 @@ namespace wml {
 			error( boost::str( boost::format( "key '%s' not found!" ) % key ) );
 		}
 
-		Node & operator[] ( int i ) {
-			return nodes[ i ];
+		const Node & operator[] ( const std::string &key ) const {
+			for( auto item = nodes.begin() ; item != nodes.end() ; ++item ) {
+				if( item->content == key ) {
+					return *item;
+				}
+			}
+
+			error( boost::str( boost::format( "key '%s' not found!" ) % key ) );
 		}
 
-		size_t size() const {
-			return nodes.size();
+		template< typename T >
+		T as() const {
+			return boost::lexical_cast<T>( value() );
 		}
 
-		bool empty() const {
-			return nodes.empty();
+		template< typename T >
+		void setValue( const T &newValue ) {
+			if( empty() ) {
+				nodes.push_back( Node() );
+			}
+			else if( nodes.size() > 1 ) {
+				error( "expected data at node, found array/map!" );
+			}
+
+			value() = boost::lexical_cast< std::string >( newValue );
 		}
 
-		std::vector< iterator > getAll( const std::string &key ) {
+		template< typename T >
+		T get( const std::string &key ) const {
+			return (*this)[ key ].as<T>();
+		}
+
+		template< typename T >
+		T getOr( const std::string &key, const T &defaultValue ) const {
+			auto node = find( key );
+
+			if( node != cend() ) {
+				return node->as<T>();
+			}
+
+			return defaultValue;
+		}
+
+		std::vector< iterator > getNodes( const std::string &key ) {
 			std::vector< iterator > results;
 
 			for( auto item = nodes.begin() ; item != nodes.end() ; ++item ) {
@@ -171,25 +200,20 @@ namespace wml {
 			return nodes.back();
 		}
 
+		Node &push_back( const std::string &content ) {
+			push_back( Node( content ) );
+			return nodes.back();
+		} 
+
+		Node &push_back( std::string &&content ) {
+			push_back( Node( std::move( content ) ) );
+			return nodes.back();
+		} 
+
 		template< typename T>
-		Node &push_back( const T &value ) {
-			push_back( Node( boost::lexical_cast< std::string >( value ) ) );
+		Node &push_back( const T &content ) {
+			push_back( Node( boost::lexical_cast< std::string >( content ) ) );
 			return nodes.back();
-		}
-
-		Node &push_back( const std::string &value ) {
-			push_back( Node( value ) );
-			return nodes.back();
-		} 
-
-		Node &push_back( std::string &&value ) {
-			push_back( Node( std::move( value ) ) );
-			return nodes.back();
-		} 
-
-		template< typename T >
-		void set( const T &value ) {
-			content = boost::lexical_cast< std::string >( value );
 		}
 
 		Node() {}

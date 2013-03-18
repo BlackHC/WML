@@ -80,6 +80,7 @@
     <ClCompile Include="gtest-all.cc" />
     <ClCompile Include="gtest_main.cc" />
     <ClCompile Include="leanTextProcessingTest.cpp" />
+    <ClCompile Include="wmlNodeAPITest.cpp" />
     <ClCompile Include="wmlTest.cpp" />
   </ItemGroup>
   <ItemGroup>
